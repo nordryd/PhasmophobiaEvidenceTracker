@@ -1,8 +1,12 @@
 package com.nordryd.phasmophobiaevidencetracker;
 
-public class Main {
+import com.nordryd.phasmophobiaevidencetracker.objects.Journal;
 
-    public static void main(final String... args){
-        System.out.println("lol");
+public class Main
+{
+    static boolean running = true;
+
+    public static void main(final String... args) {
+        new Journal();
     }
 }
