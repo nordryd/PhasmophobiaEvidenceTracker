@@ -1,9 +1,14 @@
-package com.nordryd.phasmophobiaevidencetracker.objects;
+package com.nordryd.phasmophobiaevidencetracker.ghost;
 
 import static java.util.Arrays.asList;
 
 import java.util.List;
 
+import com.nordryd.phasmophobiaevidencetracker.evidence.Evidence;
+
+/**
+ * The types of ghosts as well as their determining {@link Evidence}.
+ */
 public enum Ghost
 {
     BANSHEE("Banshee", Evidence.EMF_5, Evidence.FINGERPRINTS, Evidence.FREEZING_TEMPERATURES),
@@ -28,11 +33,11 @@ public enum Ghost
         this.evidence3 = evidence3;
     }
 
-    public String getName() {
+    public final String getName() {
         return name;
     }
 
-    public List<Evidence> getEvidence() {
+    public final List<Evidence> getEvidence() {
         return asList(evidence1, evidence2, evidence3);
     }
 }

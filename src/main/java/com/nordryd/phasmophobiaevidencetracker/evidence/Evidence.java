@@ -1,5 +1,8 @@
-package com.nordryd.phasmophobiaevidencetracker.objects;
+package com.nordryd.phasmophobiaevidencetracker.evidence;
 
+/**
+ * The poss
+ */
 public enum Evidence
 {
     EMF_5("EMF 5"),
@@ -13,5 +16,9 @@ public enum Evidence
 
     Evidence(final String name) {
         this.name = name;
+    }
+
+    public final String getName() {
+        return name;
     }
 }
