@@ -6,6 +6,7 @@ import static java.util.stream.Collectors.toSet;
 
 import java.awt.Color;
 import java.awt.Container;
+import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.Panel;
 import java.awt.event.ActionEvent;
@@ -28,14 +29,26 @@ import com.nordryd.phasmophobiaevidencetracker.ghost.Ghost;
 public class Journal extends JFrame implements ActionListener
 {
     private static final String TITLE = "Phasmophobia Evidence Tracker";
+    private static final String DISPLAY_INVALID_EVIDENCE_COMBO = "This is not a valid combination of evidence.";
+    private static final String DISPLAY_NO_EVIDENCE_SELECTED = "Click on a piece of evidence when you discover it :)";
+
+    private static final Color COLOR_SELECTED = Color.PINK;
+    private static final Color COLOR_NOT_SELECTED = Color.LIGHT_GRAY;
+    private static final Color COLOR_NOT_SELECTED_3_SELECTED = Color.BLACK;
 
     private static final int WIDTH = 500;
     private static final int HEIGHT = 350;
+    private static final int FONT_SIZE = 16;
+
+    private static final Font FONT_NORMAL = new Font("normal", Font.PLAIN, FONT_SIZE);
+    private static final Font FONT_GHOST_DISCOVERED = new Font("ghost_discovered", Font.BOLD, FONT_SIZE);
+    private static final Font FONT_INVALID_EVIDENCE_COMBO = new Font("invalid_combo", Font.ITALIC, FONT_SIZE);
 
     private final List<Evidence> currentEvidence;
     private final JTextArea survivalGuideDisplay, ghostDisplay, evidenceDisplay;
     private final List<EvidenceButton> buttons;
 
+    private EvidenceButton pressedEvidenceButton;
     private Set<Evidence> possibleEvidence;
     private Set<Ghost> possibleGhosts;
 
@@ -74,24 +87,29 @@ public class Journal extends JFrame implements ActionListener
         setTitle(TITLE);
         setSize(WIDTH, HEIGHT);
         setVisible(true);
+
+        render();
     }
 
     @Override
     public void actionPerformed(final ActionEvent actionEvent) {
         final Object source = actionEvent.getSource();
         if (source instanceof EvidenceButton) {
-            render((EvidenceButton) source);
+            pressedEvidenceButton = (EvidenceButton) source;
+            render();
         }
     }
 
     private void updateEvidence(final EvidenceButton pressedEvidenceButton) {
-        if (pressedEvidenceButton.isSelected()) {
-            pressedEvidenceButton.isSelected(false);
-            currentEvidence.remove(pressedEvidenceButton.getEvidence());
-        }
-        else if (currentEvidence.size() < 3) {
-            pressedEvidenceButton.isSelected(true);
-            currentEvidence.add(pressedEvidenceButton.getEvidence());
+        if (pressedEvidenceButton != null) {
+            if (pressedEvidenceButton.isSelected()) {
+                pressedEvidenceButton.isSelected(false);
+                currentEvidence.remove(pressedEvidenceButton.getEvidence());
+            }
+            else if (currentEvidence.size() < 3) {
+                pressedEvidenceButton.isSelected(true);
+                currentEvidence.add(pressedEvidenceButton.getEvidence());
+            }
         }
     }
 
@@ -102,12 +120,29 @@ public class Journal extends JFrame implements ActionListener
 
     private void deducePossibleEvidence() {
         final Set<Evidence> possibleEvidence = possibleGhosts.stream().map(Ghost::getEvidence)
-                .flatMap(Collection::parallelStream).collect(toSet());
+                .flatMap(Collection::stream).collect(toSet());
         possibleEvidence.removeAll(currentEvidence);
-        this.possibleEvidence = possibleEvidence;
+
+        if (possibleEvidence.size() == 1) {
+            final Evidence onlyPossibleEvidence = possibleEvidence.iterator().next();
+            currentEvidence.add(onlyPossibleEvidence);
+            buttons.stream().filter(button -> onlyPossibleEvidence.equals(button.getEvidence())).findFirst().get()
+                    .isSelected(true);
+            deducePossibleGhosts();
+        }
+        else {
+            this.possibleEvidence = possibleEvidence;
+        }
     }
 
-    private void render(final EvidenceButton pressedEvidenceButton) {
+    private void updateSurvivalGuide() {
+
+    }
+
+    private void render() {
+        ghostDisplay.setFont(FONT_NORMAL);
+        evidenceDisplay.setFont(FONT_NORMAL);
+        survivalGuideDisplay.setFont(FONT_NORMAL);
         updateEvidence(pressedEvidenceButton);
         deducePossibleGhosts();
         deducePossibleEvidence();
@@ -121,14 +156,16 @@ public class Journal extends JFrame implements ActionListener
 
         if (currentEvidence.isEmpty()) {
             ghostDisplay.setText("");
-            evidenceDisplay.setText("Click on a piece of evidence when you discover it :)");
-            buttons.forEach(button -> button.setBackground(Color.LIGHT_GRAY));
+            evidenceDisplay.setText(DISPLAY_NO_EVIDENCE_SELECTED);
+            buttons.forEach(button -> button.setBackground(COLOR_NOT_SELECTED));
         }
         else {
             if (currentEvidence.size() < 3) {
-                buttons.forEach(button -> button.setBackground(button.isSelected() ? Color.PINK : Color.LIGHT_GRAY));
+                buttons.forEach(
+                        button -> button.setBackground(button.isSelected() ? COLOR_SELECTED : COLOR_NOT_SELECTED));
                 if (possibleGhosts.isEmpty()) {
-                    ghostDisplay.setText("This is not a valid combination of evidence.");
+                    ghostDisplay.setFont(FONT_INVALID_EVIDENCE_COMBO);
+                    ghostDisplay.setText(DISPLAY_INVALID_EVIDENCE_COMBO);
                     evidenceDisplay.setText("");
                 }
                 else {
@@ -141,20 +178,18 @@ public class Journal extends JFrame implements ActionListener
                 }
             }
             else {
-                buttons.forEach(button -> button.setBackground(button.isSelected() ? Color.PINK : Color.BLACK));
+                buttons.forEach(button -> button
+                        .setBackground(button.isSelected() ? COLOR_SELECTED : COLOR_NOT_SELECTED_3_SELECTED));
                 evidenceDisplay.setText("");
                 if (possibleGhosts.isEmpty()) {
-                    ghostDisplay.setText("This is not a valid combination of evidence.");
+                    ghostDisplay.setFont(FONT_INVALID_EVIDENCE_COMBO);
+                    ghostDisplay.setText(DISPLAY_INVALID_EVIDENCE_COMBO);
                 }
                 else {
+                    ghostDisplay.setFont(FONT_GHOST_DISCOVERED);
                     ghostDisplay.setText("The ghost is a " + possibleGhosts.iterator().next());
                 }
             }
-        }
-
-        if (!currentEvidence.isEmpty() && possibleGhosts.isEmpty()) {
-            ghostDisplay.setText("This is not a valid combination of evidence.");
-            evidenceDisplay.setText("");
         }
     }
 }
