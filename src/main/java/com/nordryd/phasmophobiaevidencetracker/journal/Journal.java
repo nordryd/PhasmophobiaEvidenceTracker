@@ -52,6 +52,12 @@ public class Journal extends JFrame implements ActionListener
     private Set<Evidence> possibleEvidence;
     private Set<Ghost> possibleGhosts;
 
+    // should add buttons with the ghosts themselves on it to click for details
+    // can we make dynamically sized windows?
+    // when the ghost is discovered, its journal entry should immediately show
+    // the journal with all the ghosts' details should be a separate panel on the side
+    // the evidence tracker should have the "survival guide" tips that aren't ingame
+
     public Journal() {
         this.possibleEvidence = new HashSet<>();
         this.possibleGhosts = new HashSet<>();
@@ -70,7 +76,7 @@ public class Journal extends JFrame implements ActionListener
         this.evidenceDisplay.setLineWrap(true);
         this.evidenceDisplay.setWrapStyleWord(true);
 
-        final Panel buttonPanel = new Panel(new GridLayout(3, 2, 5, 5));
+        final Panel buttonPanel = new Panel(new GridLayout(4, 2, 5, 5));
         this.buttons = new ArrayList<>();
         for (final Evidence evidence : Evidence.values()) {
             final EvidenceButton button = new EvidenceButton(evidence, this);
@@ -100,7 +106,7 @@ public class Journal extends JFrame implements ActionListener
         }
     }
 
-    private void updateEvidence(final EvidenceButton pressedEvidenceButton) {
+    private void updateEvidence() {
         if (pressedEvidenceButton != null) {
             if (pressedEvidenceButton.isSelected()) {
                 pressedEvidenceButton.isSelected(false);
@@ -125,9 +131,9 @@ public class Journal extends JFrame implements ActionListener
 
         if (possibleEvidence.size() == 1) {
             final Evidence onlyPossibleEvidence = possibleEvidence.iterator().next();
-            currentEvidence.add(onlyPossibleEvidence);
-            buttons.stream().filter(button -> onlyPossibleEvidence.equals(button.getEvidence())).findFirst().get()
-                    .isSelected(true);
+            pressedEvidenceButton = buttons.stream().filter(button -> onlyPossibleEvidence.equals(button.getEvidence()))
+                    .findFirst().get();
+            updateEvidence();
             deducePossibleGhosts();
         }
         else {
@@ -143,7 +149,7 @@ public class Journal extends JFrame implements ActionListener
         ghostDisplay.setFont(FONT_NORMAL);
         evidenceDisplay.setFont(FONT_NORMAL);
         survivalGuideDisplay.setFont(FONT_NORMAL);
-        updateEvidence(pressedEvidenceButton);
+        updateEvidence();
         deducePossibleGhosts();
         deducePossibleEvidence();
         // change button colors and display possible ghost types as well
@@ -154,41 +160,37 @@ public class Journal extends JFrame implements ActionListener
 
         // if no ghosts match the criteria, print a message that says so
 
-        if (currentEvidence.isEmpty()) {
-            ghostDisplay.setText("");
-            evidenceDisplay.setText(DISPLAY_NO_EVIDENCE_SELECTED);
-            buttons.forEach(button -> button.setBackground(COLOR_NOT_SELECTED));
-        }
-        else {
-            if (currentEvidence.size() < 3) {
-                buttons.forEach(
-                        button -> button.setBackground(button.isSelected() ? COLOR_SELECTED : COLOR_NOT_SELECTED));
-                if (possibleGhosts.isEmpty()) {
-                    ghostDisplay.setFont(FONT_INVALID_EVIDENCE_COMBO);
-                    ghostDisplay.setText(DISPLAY_INVALID_EVIDENCE_COMBO);
-                    evidenceDisplay.setText("");
-                }
-                else {
-                    ghostDisplay.setText("The ghost is either a: " +
-                            possibleGhosts.stream().map(ghost -> ghost.getName() + ", ").collect(joining())
-                                    .replaceAll(", $", ""));
-                    evidenceDisplay.setText("Possible Evidence: " +
-                            possibleEvidence.stream().map(evidence -> evidence.getName() + ", ").collect(joining())
-                                    .replaceAll(", $", ""));
-                }
+        if (currentEvidence.size() < 3) {
+            buttons.forEach(button -> button.setBackground(button.isSelected() ? COLOR_SELECTED : COLOR_NOT_SELECTED));
+            if (currentEvidence.isEmpty()) {
+                ghostDisplay.setText("");
+                evidenceDisplay.setText(DISPLAY_NO_EVIDENCE_SELECTED);
+            }
+            else if (possibleGhosts.isEmpty()) {
+                ghostDisplay.setFont(FONT_INVALID_EVIDENCE_COMBO);
+                ghostDisplay.setText(DISPLAY_INVALID_EVIDENCE_COMBO);
+                evidenceDisplay.setText("");
             }
             else {
-                buttons.forEach(button -> button
-                        .setBackground(button.isSelected() ? COLOR_SELECTED : COLOR_NOT_SELECTED_3_SELECTED));
-                evidenceDisplay.setText("");
-                if (possibleGhosts.isEmpty()) {
-                    ghostDisplay.setFont(FONT_INVALID_EVIDENCE_COMBO);
-                    ghostDisplay.setText(DISPLAY_INVALID_EVIDENCE_COMBO);
-                }
-                else {
-                    ghostDisplay.setFont(FONT_GHOST_DISCOVERED);
-                    ghostDisplay.setText("The ghost is a " + possibleGhosts.iterator().next());
-                }
+                ghostDisplay.setText("The ghost is either a: " +
+                        possibleGhosts.stream().map(ghost -> ghost.getName() + ", ").collect(joining())
+                                .replaceAll(", $", ""));
+                evidenceDisplay.setText("Possible Evidence: " +
+                        possibleEvidence.stream().map(evidence -> evidence.getName() + ", ").collect(joining())
+                                .replaceAll(", $", ""));
+            }
+        }
+        else {
+            buttons.forEach(button -> button
+                    .setBackground(button.isSelected() ? COLOR_SELECTED : COLOR_NOT_SELECTED_3_SELECTED));
+            evidenceDisplay.setText("");
+            if (possibleGhosts.isEmpty()) {
+                ghostDisplay.setFont(FONT_INVALID_EVIDENCE_COMBO);
+                ghostDisplay.setText(DISPLAY_INVALID_EVIDENCE_COMBO);
+            }
+            else {
+                ghostDisplay.setFont(FONT_GHOST_DISCOVERED);
+                ghostDisplay.setText("The ghost is a " + possibleGhosts.iterator().next());
             }
         }
     }
